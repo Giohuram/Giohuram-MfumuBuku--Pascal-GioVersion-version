@@ -101,6 +101,8 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// Route to get user data for logged-in user
+router.get('/auth/:id', jwtAuthMiddleware, authController.getMe);
 
 
 module.exports = router;

@@ -3,6 +3,7 @@ const parentalControlController = require('../controllers/parentalControlControl
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const asyncHandler = require('../utils/asyncHandler')
 
 router.get('/', parentalControlController.getAllParentalControls);
 router.get('/:id', parentalControlController.getParentalControlById);

@@ -22,12 +22,19 @@ model User {
   childAge     Int      
   schoolLevel  SchoolLevel
   email        String     @unique
-  avatar       String?    // Champ pour le chemin de l'avatar
+  avatar       String?     
   createdAt    DateTime   @default(now())
-  verified     Boolean  @default(false)
-  // Ajoutez d'autres champs utilisateur selon vos besoins
+  verified     Boolean    @default(false)
+  // definir un champ favori de type boucle pour définir les favoris... c 1-to-many and many-to-many relationship voir github Michel 
+  // Relation avec BookUser
+  books        BookUser[]
+  // Relation avec ReadingHistory
+  readingHistory ReadingHistory[]
+  // Relation avec Subscription
+  subscriptions Subscription[]
+  // Relation avec ParentalControl
+  parentalControl ParentalControl[]
 }
-
 
 
 // models/Book.model.prisma
@@ -40,20 +47,26 @@ model Book {
   datePublished DateTime
   bookCover     String
   audioContent  String?   // Nouvelle propriété pour le contenu audio du livre
-  age           String? // Nouvelle propriété pour l'âge approprié du livre
+  age           String?   // Nouvelle propriété pour l'âge approprié du livre
   description   String?
-  // Relation pour représenter les utilisateurs qui ont sélectionné ce livre
+  // Relation avec BookUser
+  users         BookUser[]
+  // Relation avec ReadingHistory
+  readingHistory ReadingHistory[]
 }
 
+
+
 // Relation pour représenter les utilisateurs qui ont sélectionné ce livre
-// model BookUser {
-//   id       Int    @id @default(autoincrement())
-//   user     User   @relation(fields: [userId], references: [id])
-//   userId   Int
-//   book     Book   @relation(fields: [bookId], references: [id])
-//   bookId   Int
-//   // Vous pouvez ajouter d'autres champs comme la date à laquelle l'utilisateur a ajouté le livre, etc.
-// }
+model BookUser {
+  id       Int    @id @default(autoincrement())
+  user     User   @relation(fields: [userId], references: [id])
+  userId   Int
+  book     Book   @relation(fields: [bookId], references: [id])
+  bookId   Int
+  addedAt  DateTime @default(now())
+}
+
 
 
 // models/Subscription.model.prisma
@@ -64,18 +77,21 @@ model Subscription {
   startDate    DateTime @default(now())
   endDate      DateTime
   // Ajoutez d'autres champs d'abonnement selon vos besoins
+  user         User     @relation(fields: [userId], references: [id])
 }
 
 // models/ReadingHistory.model.prisma
-model ReadingHistory {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  bookId    Int
-  readDate  DateTime @default(now())
-  preferredCategory String
-  readingLevel     String // débutant / intermédiaire / avancé
-  // Ajoutez d'autres champs pour l'historique de lecture selon vos besoins
-}
+// model ReadingHistory {
+//   id        Int      @id @default(autoincrement())
+//   userId    Int
+//   bookId    Int
+//   readDate  DateTime @default(now())
+//   preferredCategory String
+//   readingLevel     String // débutant / intermédiaire / avancé
+//   // Ajoutez d'autres champs pour l'historique de lecture selon vos besoins
+//   user      User     @relation(fields: [userId], references: [id])
+//   book      Book     @relation(fields: [bookId], references: [id])
+// }
 
 // // models/UserPreferences.model.prisma
 // model UserPreferences {
@@ -84,15 +100,32 @@ model ReadingHistory {
 //   preferredLanguage String
 //   preferredCategory String
 //   readingLevel     String // débutant / intermédiaire / avancé
-//   // Ajoutez d'autres champs de préférences utilisateur selon vos besoins
+//   // Relation avec User
+//   user             User     @relation(fields: [userId], references: [id])
 // }
 
-// models/ParentalControl.model.prisma
+
 model ParentalControl {
   id               Int      @id @default(autoincrement())
+  userId           Int
   isEnabled        Boolean  @default(false)
   allowedStartTime DateTime
   allowedEndTime   DateTime
   createdAt        DateTime @default(now())
-  // Ajoutez d'autres champs selon vos besoins
+  // Relation avec User
+  user             User     @relation(fields: [userId], references: [id])
+}
+
+// models/ReadingHistory.model.prisma
+
+model ReadingHistory {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  bookId          Int
+  readDate        DateTime @default(now())
+  preferredCategory String
+  readingLevel     String // débutant / intermédiaire / avancé
+  lastPageRead    Int?    // Nouvelle propriété pour la dernière page lue
+  user            User     @relation(fields: [userId], references: [id])
+  book            Book     @relation(fields: [bookId], references: [id])
 }

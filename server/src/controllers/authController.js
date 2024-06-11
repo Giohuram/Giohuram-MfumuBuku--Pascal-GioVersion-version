@@ -67,7 +67,7 @@ const login = async (req, res) => {
     }
 
     // Générer un token JWT
-    const token = jwt.sign({ id: user.id }, 'rhksisnsws38jdd87DJS()$#435bjdsk');
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY);
 
     // Envoyer la réponse avec le token
     res.json({ token });
@@ -95,4 +95,56 @@ const getUserBooks = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, getUserBooks };
+const getCurrentUser = async (req, res) => {
+  try {
+    // Assuming the user ID is stored in the JWT and decoded in the jwtAuthMiddleware
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: {
+        books: true, 
+        readingHistory: true,
+        userPreferences: true,
+        parentalControl: true, 
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Error fetching user details' });
+  }
+};
+
+const getMe = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];  // Extract the token from Authorization header
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);  // Replace 'your_jwt_secret' with your actual JWT secret
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decoded.id
+      },
+      include: {
+        books: true, 
+        readingHistory: true,
+        userPreferences: true,
+        parentalControl: true, 
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error retrieving user data:', error);
+    res.status(500).json({ message: 'Error retrieving user data' });
+  }
+};
+
+module.exports = { signup, login, getUserBooks, getCurrentUser, getMe };

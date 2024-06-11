@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const readingHistoryService = require('../services/readingHistoryService');
+const asyncHandler = require('../utils/asyncHandler'); // Assurez-vous que le chemin est correct
 
 const getAllReadingHistories = async (req, res) => {
   try {
@@ -50,10 +51,33 @@ const deleteReadingHistory = async (req, res) => {
   }
 };
 
+// Mettre à jour la dernière page lue
+const updateLastPageRead = asyncHandler(async (req, res) => {
+  const { userId, bookId, lastPageRead } = req.body;
+  const readingHistory = await prisma.readingHistory.updateMany({
+    where: { userId, bookId },
+    data: { lastPageRead }
+  });
+  res.status(200).json(readingHistory);
+});
+
+// Récupérer la dernière page lue pour un livre spécifique
+const getLastPageRead = asyncHandler(async (req, res) => {
+  const { userId, bookId } = req.params;
+  const readingHistory = await prisma.readingHistory.findFirst({
+    where: { userId, bookId },
+    select: { lastPageRead: true }
+  });
+  res.status(200).json(readingHistory);
+});
+
+
 module.exports = {
   getAllReadingHistories,
   getReadingHistoryById,
   createReadingHistory,
   updateReadingHistory,
   deleteReadingHistory,
+  updateLastPageRead,
+  getLastPageRead
 };

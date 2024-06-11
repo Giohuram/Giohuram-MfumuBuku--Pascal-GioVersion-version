@@ -9,5 +9,6 @@ router.get('/:id', readingHistoryController.getReadingHistoryById);
 router.post('/', readingHistoryController.createReadingHistory);
 router.put('/:id', readingHistoryController.updateReadingHistory);
 router.delete('/:id', readingHistoryController.deleteReadingHistory);
-
+router.post('/reading-history', readingHistoryController.updateLastPageRead );
+router.get('/reading-history/:bookId', readingHistoryController.getLastPageRead )
 module.exports = router;

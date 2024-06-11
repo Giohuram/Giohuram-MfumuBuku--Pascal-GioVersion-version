@@ -1,28 +1,28 @@
 const express = require('express');
 const passport = require('passport');
-const morgan = require('morgan'); 
-const bcrypt = require('bcrypt'); // Import bcrypt module
+const morgan = require('morgan');
+const bcrypt = require('bcrypt');
 const LocalStrategy = require('passport-local').Strategy;
 const cors = require('cors');
+const session = require('express-session');
+const { PrismaClient } = require('@prisma/client');
+
+// Import routes
 const authRoutes = require('./src/routes/authRoutes');
 const bookRoutes = require('./src/routes/bookRoutes');
 const userRoutes = require('./src/routes/userRoutes');
-const jwtAuthMiddleware = require('./src/middlewares/jwtAuthMiddleware');
-const { PrismaClient } = require('@prisma/client');
-const session = require('express-session');
 const verificationRoutes = require('./src/routes/verificationRoutes');
 const subscriptionRoutes = require('./src/routes/subscriptionRoutes');
 const readingHistoryRoutes = require('./src/routes/readingHistoryRoutes');
 const parentalControlRoutes = require('./src/routes/parentalControlRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
+const jwtAuthMiddleware = require('./src/middlewares/jwtAuthMiddleware');
 
 const app = express();
-
-// Import Prisma and instantiate it
 const prisma = new PrismaClient();
 
-const users = [];
-
+// Middleware de journalisation
+app.use(morgan('dev'));
 
 // Middleware pour CORS
 app.use(cors({
@@ -30,30 +30,16 @@ app.use(cors({
   credentials: true, 
 }));
 
-// Utilisation du middleware de session
-app.use(session({
-  secret: '35jfbejfb489njedbjb#bjfb%@{}?.<>\|', // Clé secrète pour signer la session
-  resave: false,
-  saveUninitialized: false,
-}));
-
-// Route pour définir une valeur dans la session
-app.get('/setSessionValue', (req, res) => {
-  req.session.user = { username: 'utilisateur1' };
-  res.send('Valeur définie dans la session');
-});
-
-// Route pour récupérer une valeur de la session
-app.get('/getSessionValue', (req, res) => {
-  const user = req.session.user;
-  res.send(user ? `Utilisateur connecté: ${user.username}` : 'Aucun utilisateur connecté');
-});
-
 // Middleware pour parser les données JSON
 app.use(express.json());
 
-app.use('/verification', verificationRoutes);
-
+// Utilisation du middleware de session
+app.use(session({
+  secret: process.env.Session_Secret_Key, // Utiliser une variable d'environnement
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: true, httpOnly: true } // Améliorer la sécurité des cookies
+}));
 
 // Initialisation de Passport
 app.use(passport.initialize());
@@ -63,7 +49,7 @@ passport.use(new LocalStrategy(
   async (username, password, done) => {
     try {
       const user = await prisma.user.findUnique({
-        where: { username: username }
+        where: { username }
       });
       if (!user) {
         return done(null, false, { message: 'Username not found' });
@@ -79,30 +65,21 @@ passport.use(new LocalStrategy(
   }
 ));
 
-// Montage des routes d'authentification
+// Routes
 app.use('/auth', authRoutes);
-
-// Routes des livres avec le middleware d'authentification JWT
 app.use('/Book', jwtAuthMiddleware, bookRoutes);
-
-// Routes des utilisateurs avec le middleware d'authentification JWT
 app.use('/user', jwtAuthMiddleware, userRoutes);
+app.use('/verification', verificationRoutes);
+app.use('/subscriptions', subscriptionRoutes);
+app.use('/reading-histories', readingHistoryRoutes);
+app.use('/parental-controls', parentalControlRoutes);
+app.use('/api', paymentRoutes);
 
 // Gestionnaire d'erreurs
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Internal Server Error');
 });
-
-app.use('/subscriptions', subscriptionRoutes);
-app.use('/reading-histories', readingHistoryRoutes);
-app.use('/parental-controls', parentalControlRoutes);
-
-// Route de paiement 
-app.use('/api', paymentRoutes);
-
-// Middleware de journalisation
-app.use(morgan('dev'));
 
 // Démarrage du serveur
 const PORT = process.env.PORT || 3005;
