@@ -9,6 +9,7 @@ const StatLecture = () => {
   const { user } = useContext(UserContext);
   const [readingHistory, setReadingHistory] = useState([]);
 
+
   useEffect(() => {
     const fetchReadingHistory = async () => {
       try {

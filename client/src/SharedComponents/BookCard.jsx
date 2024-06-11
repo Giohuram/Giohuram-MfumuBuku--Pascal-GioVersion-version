@@ -1,7 +1,8 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useBookContext } from '../Context/BookContext';
 import { UserContext } from '../Context/userContext';
 
 // Import Swiper styles
@@ -9,29 +10,34 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 
 const BookCard = ({ headline, books, onAddToCollection }) => {
-  const { user, addToMyBooks } = useContext(UserContext);
-  const [selectedBook, setSelectedBook] = useState(null);
-  const navigate = useNavigate();
+  const { user, isAuthenticated, favorites, addFavorite } = useContext(UserContext);
+  console.log('User in BookCard:', user); // Log the entire user object
+  console.log('User ID in BookCard:', user.id); // Log the user ID
 
-  // Function to check if the book is already in favorites
+  const [isAdding, setIsAdding] = useState(false);
+
   const isFavorite = (bookId) => {
-    return user && user.books && user.books.some(favoriteBook => favoriteBook.id === bookId);
+    return favorites.some(favoriteBook => favoriteBook.id === bookId);
   };
+
+  const handleAddToFavorites = async (book) => {
+    console.log('Attempting to add to favorites with user ID:', user.id);  // Log user ID
+    if (isAuthenticated && !isFavorite(book.id)) {
+      setIsAdding(true);
+      try {
+        await addFavorite(book.id);
+        favorites(book);
+      } catch (error) {
+        console.error('Error adding book to favorites:', error);
+      } finally {
+        setIsAdding(false);
+      }
+    }
+  };  
 
   if (!books || books.length === 0) {
     return <div>No books available</div>;
   }
-
-  const handleReadButtonClick = (book) => {
-    setSelectedBook(book);
-    navigate('/Lecture', { state: { book } });
-  };
-
-  const handleListenButtonClick = (book) => {
-    setSelectedBook(book);
-    navigate('/LectureAudio', { state: { book } });
-  };
-
 
   return (
     <>
@@ -42,14 +48,14 @@ const BookCard = ({ headline, books, onAddToCollection }) => {
       <div className='px-4 lg:px-24 pb-10'>
         <Swiper
           slidesPerView={1}
-          spaceBetween={10} // Adjusted space between slides
+          spaceBetween={10}
           pagination={{
             clickable: true,
           }}
           breakpoints={{
             640: {
               slidesPerView: 2,
-              spaceBetween: 10, // Adjusted space between slides for smaller screens
+              spaceBetween: 10,
             },
             768: {
               slidesPerView: 3,
@@ -66,24 +72,16 @@ const BookCard = ({ headline, books, onAddToCollection }) => {
           {books.map(book => (
             <SwiperSlide key={book.id}>
               <div className="flex flex-col items-center">
-                <Link to={`/book/${book.id}`} className="flex flex-col items-center">
                   <img src={book.bookCover} alt="bookCover" className="mb-2 w-full max-w-[200px] h-auto" />
                   <p className="text-center font-semibold">{book.title}</p>
-                  <p className="text-center font-semibold">Âge concerné: {book.age} ans</p>
-                </Link>
                 <div className="text-center">
-                      <button
-                        className="bg-[#DC7211] text-white py-2 px-4 rounded-lg mt-2 mr-2"
-                        onClick={() => handleReadButtonClick(book)}
-                      >
-                        Lire
-                      </button>
-                      <button
-                        className="bg-[#DC7211] text-white py-2 px-4 rounded-lg mt-2"
-                        onClick={() => handleListenButtonClick(book)}
-                      >
-                        Écouter
-                      </button>
+                  <button
+                    className={`bg-[#DC7211] text-white py-2 px-4 rounded-lg mt-2 mr-2 ${isFavorite(book.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => handleAddToFavorites(book)}
+                    disabled={isFavorite(book.id) || isAdding}
+                  >
+                    {isFavorite(book.id) ? 'Livre déjà ajouté' : isAdding ? 'Ajout...' : 'Ajouter à ma collection'}
+                  </button>
                 </div>      
               </div>
             </SwiperSlide>

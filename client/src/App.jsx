@@ -18,21 +18,20 @@ import LectureAudio from './SpecificComponent/LectureAudio';
 import ParentalControl from './SpecificComponent/ParentalControl';
 import StatLecture from './LibraryPages/StatLecture';
 import SingleBook from './Pages/SingleBook';
-import {UserContextProvider} from './Context/userContext';
+// import {UserContextProvider} from './Context/userContext';
 import Banner from './SharedComponents/Banner';
 import ResetPassword from './Utils/ResetPassword';
 import ForgotPassword from './Utils/ForgotPassword';
 import UserProfilePage from './SpecificComponent/UserProfilePage';
 import ModalAbonnement from './SpecificComponent/ModalAbonnement';
 import PaymentPage from './Utils/PaymentPage';
-
+import MyBooks from './LibraryPages/MyBooks'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
 
   return (
-  <UserContextProvider>
     <BookProvider>
       <MyBooksProvider>
         <Router>
@@ -56,6 +55,7 @@ function App() {
               <Route path="/Book/:id" element={<SingleBook />} />
               <Route path="/MyProfile" element={<MyProfile />} />
               <Route path="/PaymentPage" element={<PaymentPage />} />
+              <Route path="/MyBooks" element={<MyBooks />} />
               <Route path="/" element={<Banner />} />
               <Route path="/ResetPassword" element={<ResetPassword />} />
               <Route path="/ForgotPassword" element={<ForgotPassword />} />
@@ -65,8 +65,7 @@ function App() {
       
         </Router>
     </MyBooksProvider>
-   </BookProvider>
-  </UserContextProvider>    
+   </BookProvider>  
   );
 }
 

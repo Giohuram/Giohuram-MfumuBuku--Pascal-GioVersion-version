@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { UserContext } from '../Context/userContext';
 import axios from 'axios';
 import '../Styles/ParentalControl.css';
